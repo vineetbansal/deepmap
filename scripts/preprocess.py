@@ -1,16 +1,20 @@
+import os
 import os.path
-import numpy as np
 import geopandas as gpd
-import rasterio
+import numpy as np
+from osgeo import gdal
+from tqdm import tqdm
+import slidingwindow
+import pandas as pd
 from deepmap.data.ondemand import get_file
 from deepmap.deepforest.utilities import shapefile_to_annotations
-from deepmap.deepforest.preprocess import split_raster
-
+from deepmap.deepforest.preprocess import select_annotations, save_crop
 
 THIS_DIR = os.path.dirname(__file__)
 GDB = os.path.join(THIS_DIR, '../src/deepmap/data/kreike/KreikeSampleExtractedDataNam52022.gdb/')
 TIFF = get_file('aerial_1970')
 LAYER_NAME = 'Omuti1972'
+VALIDATION_FRAC = 0.2
 
 SHAPEFILES_FOLDER = os.path.join(THIS_DIR, "preprocessed_data/shapefiles")
 SPLIT_FOLDER = os.path.join(THIS_DIR, "preprocessed_data/split")
@@ -27,28 +31,53 @@ if __name__ == '__main__':
     shapefile = os.path.join(SHAPEFILES_FOLDER, f"{LAYER_NAME}.shp")
     gdf.to_file(shapefile)
 
-    annotations_df = shapefile_to_annotations(
+    annotations = shapefile_to_annotations(
         shapefile=shapefile,
         rgb=TIFF,
         buffer_size=0.15
     )
 
-    with rasterio.open(TIFF) as src:
-        numpy_image = src.read(1)
-        numpy_image = np.dstack([numpy_image] * 3)  # Convert to 3 band
+    dataset = gdal.Open(TIFF, gdal.GA_ReadOnly)
 
-        df = split_raster(
-            annotations_df,
-            numpy_image=numpy_image,
-            image_name=os.path.basename(TIFF),
-            patch_size=1000,
-            save_dir=SPLIT_FOLDER
-        )
+    xsize, ysize, nbands = dataset.RasterXSize, dataset.RasterYSize, dataset.RasterCount
+    assert nbands == 1, "Can only deal with single band images"
 
-        random_state = np.random.RandomState()
-        validation_frac = 0.2
-        training_set = df.sample(frac=1-validation_frac, random_state=random_state)
-        validation_set = df.sample(frac=validation_frac, random_state=random_state)
+    windows = slidingwindow.generateForSize(
+        width=xsize,
+        height=ysize,
+        dimOrder=slidingwindow.DimOrder.HeightWidthChannel,
+        maxWindowSize=1000,
+        overlapPercent=0.05,
+        transforms=[],
+        overrideWidth=None,
+        overrideHeight=None
+    )
 
-        training_set.to_csv(f"{SPLIT_FOLDER}/training.csv", index=None)
-        validation_set.to_csv(f"{SPLIT_FOLDER}/validation.csv", index=None)
+    all_crop_annotations = []
+    band = dataset.GetRasterBand(1)
+    for i, window in enumerate(tqdm(windows)):
+        xoff, yoff, win_xsize, win_ysize = window.x, window.y, window.w, window.h
+        crop_annotations = select_annotations(annotations, windows, i, False)
+
+        if crop_annotations is not None:
+            crop = band.ReadAsArray(xoff=xoff, yoff=yoff, win_xsize=win_xsize,
+                                    win_ysize=win_ysize)
+            all_crop_annotations.append(crop_annotations)
+            save_crop(base_dir=SPLIT_FOLDER,
+                      image_name=os.path.basename(TIFF), index=i,
+                      crop=crop)
+
+    all_crop_annotations = pd.concat(all_crop_annotations)
+    all_crop_annotations.to_csv(
+        os.path.join(SPLIT_FOLDER, "crop_annotations.csv"),
+        index=False,
+        header=True
+    )
+
+    random_state = np.random.RandomState()
+    training_set = all_crop_annotations.sample(frac=1 - VALIDATION_FRAC,
+                             random_state=random_state)
+    validation_set = all_crop_annotations.sample(frac=VALIDATION_FRAC, random_state=random_state)
+
+    training_set.to_csv(f"{SPLIT_FOLDER}/training.csv", index=None)
+    validation_set.to_csv(f"{SPLIT_FOLDER}/validation.csv", index=None)
