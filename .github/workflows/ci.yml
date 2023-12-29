@@ -18,7 +18,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        shell: bash
+        # Required when using an activated conda environment in steps
+        # See https://github.com/conda-incubator/setup-miniconda#IMPORTANT
+        shell: bash -l {0}
 
     steps:
       - uses: actions/checkout@v2
@@ -32,16 +34,18 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
-          python-version: ${{ matrix.python }}
+          auto-activate-base: false
+          activate-environment: deepmap
+          environment-file: environment.yml
 
-      - name: Create and activate conda environment
+      - name: Conda Info
         run: |
-          conda env create -f environment.yml
-          conda activate deepmap
+          conda info
+          conda list
 
       - name: Convert notebooks to scripts
         run: |
-          ./generate
+          bash generate
         working-directory: ./scripts
 
       - name: Run all scripts
