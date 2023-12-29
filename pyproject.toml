@@ -19,7 +19,18 @@ dependencies = [
     "geopandas",
     "fiona",
     "mapclassify",
-    "pooch"
+    "pooch",
+    "xmltodict",
+    "tqdm",
+    "slidingwindow",
+    "torch",
+    "torchvision>=0.13",
+    "opencv-python>=4.5.4",
+    "pytorch-lightning>1.5.8",
+    "albumentations>=1.0.0",
+    "rtree",
+    "pycocotools",
+    "tensorboard",
 ]
 
 [tool.setuptools]

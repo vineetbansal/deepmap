@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, vb/deepforest ]
   pull_request:
     branches: [ main, develop ]
 
@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
         python: ["3.9"]
       fail-fast: false
 
@@ -43,12 +43,16 @@ jobs:
           conda info
           conda list
 
-      - name: Convert notebooks to scripts
+      - name: Run all notebooks
         run: |
           jupyter nbconvert --to script *.ipynb --output-dir .
-        working-directory: ./notebooks
-
-      - name: Run all scripts
-        run: |
           for f in *.py; do python "$f"; done
         working-directory: ./notebooks
+
+      - name: Preprocess Data
+        run: |
+          python scripts/preprocess.py
+
+      - name: Train Model
+        run: |
+          python scripts/train.py
