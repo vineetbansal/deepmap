@@ -1,0 +1,8 @@
+name: deepmap
+dependencies:
+- python==3.9.13
+- gdal
+- rasterio
+- pip
+- pip:
+  - -r requirements.txt

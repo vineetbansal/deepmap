@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deepmap"
+version = "0.0.1"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+dependencies = [
+    "cartopy",
+    "folium",
+    "jupyterlab",
+    "nbconvert",
+    "matplotlib",
+    "geopandas",
+    "fiona",
+    "mapclassify",
+    "pooch"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+wbi = ["data/*"]

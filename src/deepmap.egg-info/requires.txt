@@ -1,0 +1,9 @@
+cartopy
+folium
+jupyterlab
+nbconvert
+matplotlib
+geopandas
+fiona
+mapclassify
+pooch

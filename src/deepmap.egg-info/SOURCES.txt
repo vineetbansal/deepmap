@@ -1,0 +1,9 @@
+pyproject.toml
+src/deepmap/__init__.py
+src/deepmap.egg-info/PKG-INFO
+src/deepmap.egg-info/SOURCES.txt
+src/deepmap.egg-info/dependency_links.txt
+src/deepmap.egg-info/requires.txt
+src/deepmap.egg-info/top_level.txt
+src/deepmap/data/__init__.py
+src/deepmap/data/ondemand.py

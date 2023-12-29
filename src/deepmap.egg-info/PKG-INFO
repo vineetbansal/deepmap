@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: deepmap
+Version: 0.0.1
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: POSIX :: Linux
+Requires-Python: >=3.9
+Requires-Dist: cartopy
+Requires-Dist: folium
+Requires-Dist: jupyterlab
+Requires-Dist: nbconvert
+Requires-Dist: matplotlib
+Requires-Dist: geopandas
+Requires-Dist: fiona
+Requires-Dist: mapclassify
+Requires-Dist: pooch

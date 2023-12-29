@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  run_tests:
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.9"]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Upgrade setuptools
+        run: |
+          pip3 install wheel --upgrade
+          pip3 install setuptools --upgrade
+
+      - name: Set up conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python }}
+
+      - name: Create and activate conda environment
+        run: |
+          conda env create -f environment.yml
+          conda activate deepmap
+
+      - name: Convert notebooks to scripts
+        run: |
+          ./generate
+        working-directory: ./scripts
+
+      - name: Run all scripts
+        run: |
+          for f in *.py; do python "$f"; done
+        working-directory: ./scripts
