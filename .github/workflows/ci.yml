@@ -45,10 +45,10 @@ jobs:
 
       - name: Convert notebooks to scripts
         run: |
-          bash generate
-        working-directory: ./scripts
+          jupyter nbconvert --to script *.ipynb --output-dir .
+        working-directory: ./notebooks
 
       - name: Run all scripts
         run: |
           for f in *.py; do python "$f"; done
-        working-directory: ./scripts
+        working-directory: ./notebooks
