@@ -11,19 +11,27 @@ Large files that are downloaded/cached automagically using the pooch library.
     replace "dl=0" with "dl=1"
 """
 
-files = {
-    "aerial_1970_clipped": {
-        "url": "https://dl.dropboxusercontent.com/scl/fi/avl01m8xt33m32jhfrqup/Aerial1970_clipped.tif?rlkey=bap65eirnwwk8qqkedinfxnuy&dl=1",
-        "hash": "md5:9ac6601f5f9e8160efebabe6f26c3657",
+ONDEMAND = pooch.create(
+    path=pooch.os_cache("deepmap"),
+    base_url="https://dl.dropboxusercontent.com/scl/fi",
+    registry={
+        "aerial_1970_clipped": "md5:9ac6601f5f9e8160efebabe6f26c3657",
+        "aerial_1970": "md5:55601074d9a60e4cb10e779a06d58f5c"
     },
-    "aerial_1970": {
-        "url": "https://dl.dropboxusercontent.com/scl/fi/u41iaog9j42yrtyiulhjr/Aerial1970_May12_2021_secondGCPsTest.tif?rlkey=slbap8hywsa5hlzc65q553yl8&dl=1",
-        "hash": "md5:55601074d9a60e4cb10e779a06d58f5c",
-    }
-}
+    urls={
+        "aerial_1970_clipped": "https://dl.dropboxusercontent.com/scl/fi/avl01m8xt33m32jhfrqup/Aerial1970_clipped.tif?rlkey=bap65eirnwwk8qqkedinfxnuy&dl=1",
+        "aerial_1970": "https://dl.dropboxusercontent.com/scl/fi/u41iaog9j42yrtyiulhjr/Aerial1970_May12_2021_secondGCPsTest.tif?rlkey=slbap8hywsa5hlzc65q553yl8&dl=1",
+    },
+    env="DEEPMAP_POOCH_DIR"
+)
 
 
 def get_file(which):
-    assert which in files, f"Unknown file {which}"
-    file = files[which]
-    return pooch.retrieve(url=file["url"], known_hash=file["hash"])
+    return ONDEMAND.fetch(which)
+
+
+def get_all():
+    """
+    Download all available files. Slow, but useful for one time cacheing.
+    """
+    return [get_file(f) for f in ONDEMAND.registry]
