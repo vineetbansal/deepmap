@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop, vb/deepforest ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  ci:
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.9"]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        # Required when using an activated conda environment in steps
+        # See https://github.com/conda-incubator/setup-miniconda#IMPORTANT
+        shell: bash -l {0}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Upgrade setuptools
+        run: |
+          pip3 install wheel --upgrade
+          pip3 install setuptools --upgrade
+
+      - name: Set up conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          auto-activate-base: false
+          activate-environment: deepmap
+          environment-file: environment.yml
+
+      - name: Conda Info
+        run: |
+          conda info
+          conda list
+
+      - name: Cache large files
+        run: |
+          python -c "from deepmap.data.ondemand import get_all; get_all()"
+
+      - name: Run all notebooks
+        run: |
+          jupyter nbconvert --to script *.ipynb --output-dir .
+          for f in *.py; do python "$f"; done
+        working-directory: ./notebooks
+
+      - name: Preprocess Data
+        run: |
+          python scripts/preprocess.py
+
+      - name: Train Model
+        run: |
+          python scripts/train.py
