@@ -2,16 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop, vb/deepforest ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
 
 jobs:
-  ci:
+  run_tests:
 
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.9"]
       fail-fast: false
 
@@ -43,12 +43,12 @@ jobs:
           conda info
           conda list
 
-      - name: Cache large files
-        run: |
-          python -c "from deepmap.data.ondemand import get_all; get_all()"
-
-      - name: Run all notebooks
+      - name: Convert notebooks to scripts
         run: |
           jupyter nbconvert --to script *.ipynb --output-dir .
+        working-directory: ./notebooks
+
+      - name: Run all scripts
+        run: |
           for f in *.py; do python "$f"; done
         working-directory: ./notebooks
