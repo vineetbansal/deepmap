@@ -52,11 +52,3 @@ jobs:
           jupyter nbconvert --to script *.ipynb --output-dir .
           for f in *.py; do python "$f"; done
         working-directory: ./notebooks
-
-      - name: Preprocess Data
-        run: |
-          python scripts/preprocess.py
-
-      - name: Train Model
-        run: |
-          python scripts/train.py
